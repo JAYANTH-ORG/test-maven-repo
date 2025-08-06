@@ -1,6 +1,6 @@
 # PowerShell script to clean up and commit changes
 
-Write-Host "🧹 Cleaning up and preparing test repository..." -ForegroundColor Cyan
+Write-Host "🧹 Cleaning up and preparing test repository...." -ForegroundColor Cyan
 
 # Remove target directory if it exists
 if (Test-Path "target") {
