@@ -2,6 +2,8 @@
 
 This is a **test repository** containing intentional security vulnerabilities designed to validate the SecureFlow security scanning workflow.
 
+**🔄 Updated:** Enhanced scanner with pattern-based fallbacks for comprehensive vulnerability detection.
+
 ## ⚠️ WARNING
 **This repository contains intentional security vulnerabilities and should NEVER be used in production environments.**
 
