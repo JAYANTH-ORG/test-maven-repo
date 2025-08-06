@@ -76,3 +76,14 @@ The workflow includes validation steps to confirm that vulnerabilities were dete
 ---
 
 **Remember**: This is a test repository for security tooling validation only!
+
+This repository contains intentional security issues for testing:
+- SAST vulnerabilities (SQL injection, XSS, command injection, etc.)
+- Test secrets (clearly marked as test/example patterns)
+- Vulnerable dependencies (Log4Shell, old Jackson, etc.)
+- Container security issues in Dockerfile
+
+**🔧 CLI Fix Applied:** Removed unsupported parameters for better compatibility.
+
+All secrets use test/example patterns that won't trigger GitHub push protection
+while still being detectable by security scanning tools.
