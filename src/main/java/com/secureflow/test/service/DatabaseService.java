@@ -22,7 +22,7 @@ public class DatabaseService {
     private final String dbPass = "P@ssw0rd123!";
 
     // API credentials
-    private final String stripeSecretKey = "sk_live_1234567890abcdef1234567890abcdef";
+    private final String stripeSecretKey = "sk_live_FAKE567890abcdef1234567890abcdef";
     private final String twilioAuthToken = "1234567890abcdef1234567890abcdef12";
 
     /**
