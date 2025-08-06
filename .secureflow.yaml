@@ -1,0 +1,72 @@
+# SecureFlow Configuration for Test Repository
+
+scanning:
+  # Enable all scan types for comprehensive testing
+  types:
+    - sast
+    - secrets
+    - dependencies
+    - containers
+    - iac
+  
+  # Set to low threshold to catch more issues
+  severity_threshold: low
+  
+  # Target specific paths
+  targets:
+    - "."
+    - "src/"
+    - "*.xml"
+    - "*.properties"
+    - "Dockerfile"
+
+# Output configuration
+output:
+  format: sarif
+  include_html: true
+  detailed_reports: true
+
+# Tool-specific configurations
+tools:
+  semgrep:
+    enabled: true
+    rules:
+      - "auto"
+      - "security"
+      - "owasp-top-10"
+  
+  safety:
+    enabled: true
+    check_installed: true
+  
+  trufflehog:
+    enabled: true
+    scan_history: false
+    
+  dependency_check:
+    enabled: true
+    suppression_file: ""
+
+# Reporting
+reporting:
+  include_metrics: true
+  generate_summary: true
+  export_findings: true
+
+# Compliance frameworks to check
+compliance:
+  frameworks:
+    - owasp-top-10
+    - cwe-top-25
+
+# Custom rules or exclusions
+exclusions:
+  # Don't exclude anything for this test - we want to catch everything
+  paths: []
+  rules: []
+
+# Project-specific settings
+project:
+  type: java-maven
+  language: java
+  framework: spring-boot

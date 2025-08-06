@@ -1,0 +1,125 @@
+name: 🛡️ Test Maven Security Scan
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:  # Allow manual trigger
+
+env:
+  MAVEN_OPTS: -Dmaven.repo.local=.m2/repository
+  JAVA_VERSION: '17'
+
+jobs:
+  security:
+    name: Security Analysis
+    runs-on: ubuntu-latest
+    
+    permissions:
+      security-events: write
+      contents: read
+      pull-requests: write
+      actions: read
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Setup SecureFlow
+      uses: JAYANTH-ORG/SecureFlow/.github/actions/setup-secureflow@topic/backward-compatability-check
+      with:
+        python-version: '3.11'
+        secureflow-repo: 'JAYANTH-ORG/SecureFlow'
+        secureflow-ref: 'topic/backward-compatability-check'
+        config-file: '.secureflow.yaml'
+        install-tools: 'true'
+
+    - name: Compile project (for better static analysis)
+      run: |
+        echo "🔨 Compiling Maven project for analysis..."
+        mvn clean compile -DskipTests
+      continue-on-error: true
+
+    - name: Run SecureFlow security scan
+      id: security-scan
+      uses: JAYANTH-ORG/SecureFlow/.github/actions/secureflow-scan@topic/backward-compatability-check
+      with:
+        target: '.'
+        project-type: 'java-maven'
+        scan-types: 'sast,secrets,dependencies,containers'
+        severity-threshold: 'low'  # Set to low to catch more issues
+        output-format: 'sarif'
+        output-file: 'security-results'
+        generate-html: 'true'
+        java-version: ${{ env.JAVA_VERSION }}
+        fail-on-findings: 'false'  # Don't fail the build for this test
+
+    - name: Display scan results summary
+      run: |
+        echo "🛡️ Security Scan Summary"
+        echo "========================="
+        echo "Scan Status: ${{ steps.security-scan.outputs.scan-status }}"
+        echo "Tools Executed: ${{ steps.security-scan.outputs.tools-run }}"
+        echo "Total Findings: ${{ steps.security-scan.outputs.findings-count }}"
+        echo "Critical: ${{ steps.security-scan.outputs.critical-count }}"
+        echo "High: ${{ steps.security-scan.outputs.high-count }}"
+        echo ""
+        echo "📄 Generated Reports:"
+        echo "- SARIF: ${{ steps.security-scan.outputs.results-file }}"
+        echo "- HTML: ${{ steps.security-scan.outputs.html-report }}"
+
+    - name: Upload SARIF results to GitHub Security
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ steps.security-scan.outputs.results-file }}
+      if: always()
+      continue-on-error: true
+
+    - name: Upload security reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-reports-test-maven
+        path: |
+          ${{ steps.security-scan.outputs.results-file }}
+          ${{ steps.security-scan.outputs.html-report }}
+          security-results/
+        retention-days: 30
+      if: always()
+
+    - name: Test results validation
+      run: |
+        echo "🧪 Validating that vulnerabilities were detected..."
+        
+        # Check if findings were detected
+        FINDINGS_COUNT="${{ steps.security-scan.outputs.findings-count }}"
+        if [ "$FINDINGS_COUNT" -gt "0" ]; then
+          echo "✅ SUCCESS: $FINDINGS_COUNT security findings detected as expected"
+          echo "This confirms the security scanning is working properly!"
+        else
+          echo "⚠️ WARNING: No security findings detected"
+          echo "This might indicate the scanning needs adjustment"
+        fi
+        
+        # Check if SARIF file exists and has content
+        if [ -f "${{ steps.security-scan.outputs.results-file }}" ]; then
+          echo "✅ SARIF file generated successfully"
+          echo "File size: $(du -h '${{ steps.security-scan.outputs.results-file }}' | cut -f1)"
+        else
+          echo "❌ SARIF file not found"
+        fi
+        
+        # Check if HTML report exists
+        if [ -f "${{ steps.security-scan.outputs.html-report }}" ]; then
+          echo "✅ HTML report generated successfully"
+          echo "File size: $(du -h '${{ steps.security-scan.outputs.html-report }}' | cut -f1)"
+        else
+          echo "❌ HTML report not found"
+        fi
